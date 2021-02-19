@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+// @在cli创建的项目中表示src目录
 import Login from '@/views/login'
 
 Vue.use(VueRouter)
