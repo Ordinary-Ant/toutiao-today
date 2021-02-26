@@ -11,40 +11,43 @@
       <!-- 表单 -->
       <el-form ref="form" :model="form" label-width="80px" size="small">
         <el-form-item label="状态">
-          <el-radio-group v-model="form.resource">
-            <el-radio label="全部"></el-radio>
-            <el-radio label="草稿"></el-radio>
-            <el-radio label="待审核"></el-radio>
-            <el-radio label="审核通过"></el-radio>
-            <el-radio label="审核失败"></el-radio>
-            <el-radio label="已删除"></el-radio>
+          <el-radio-group v-model="status">
+            <el-radio :label="null">全部</el-radio>
+            <el-radio :label="0">草稿</el-radio>
+            <el-radio :label="1">待审核</el-radio>
+            <el-radio :label="2">审核通过</el-radio>
+            <el-radio :label="3">审核失败</el-radio>
+            <el-radio :label="4">已删除</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="频道">
-          <el-select v-model="form.region" placeholder="请选择频道">
-            <el-option label="区域一" value="shanghai"></el-option>
-            <el-option label="区域二" value="beijing"></el-option>
+          <el-select v-model="channelId" placeholder="请选择频道">
+            <el-option label="全部" :value="null"></el-option>
+            <el-option v-for="(channel, index) in defaultChannels" :label="channel.name" :value="channel.id" :key="index"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="日期">
           <el-date-picker
-            v-model="form.date"
+            v-model="rangeDate"
             type="datetimerange"
             start-placeholder="开始日期"
             end-placeholder="结束日期"
             :default-time="['12:00:00']"
+            format="yyyy-MM-dd"
+            value-format="yyyy-MM-dd"
           >
           </el-date-picker>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="onSubmit">筛选</el-button>
+          <!-- click事件函数如果指定参数，会默认传递一个无意义参数 -->
+          <el-button type="primary" :disabled="loading" @click="loadArticles(1)">筛选</el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <el-card class="box-card">
       <div slot="header" class="clearfix">
-        <span>卡片名称</span>
+        <span>根据筛选条件共查询到 {{totalCount || 4}} 条数据</span>
       </div>
       <!-- 列表 -->
       <!-- 数据列表无需手动v-for，只需要修改data数据即会自动遍历 -->
@@ -54,12 +57,22 @@
         stripe
         size="small"
         class="list-tables"
+        v-loading="loading"
       >
         <!-- prop用于设定要渲染的列表项数据字段，只能展示文本。如果需要渲染图片/按钮,可以通过官方文档的自定义表格进行设置 -->
         <el-table-column
-          prop="date"
           label="封面"
         >
+          <template slot-scope="scope">
+            <!-- <img v-if="!scope.row.cover" src='./images/no-cover.gif' alt="" class="article-cover">
+            <img v-else :src="scope.row.cover.images[0]" alt="" class="article-cover"> -->
+            <el-image
+              lazy
+              style="width: 100px; height: 100px"
+              :src="scope.row.cover ? scope.row.cover.images[0] : './images/no-cover.gif'"
+              fit="cover">
+            </el-image>
+          </template>
         </el-table-column>
         <el-table-column
           prop="name"
@@ -70,11 +83,7 @@
           label="状态">
           <!-- 自定义表格列(此时prop属性无效),如果想在自定义模板中使用当前遍历项数据，需要在template标签中加上 slot-scope="scope"-->
           <template slot-scope="scope">
-            <el-tag  v-if="scope.row.status === 0">草稿</el-tag>
-            <el-tag type="info" v-if="scope.row.status === 1">待审核</el-tag>
-            <el-tag type="success" v-if="scope.row.status === 2">审核通过</el-tag>
-            <el-tag type="warning" v-if="scope.row.status === 3">审核失败</el-tag>
-            <el-tag type="danger" v-if="scope.row.status === 4">已删除</el-tag>
+            <el-tag :type="articleStatus[scope.row.status].type" >{{articleStatus[scope.row.status].text}}</el-tag>
           </template>
         </el-table-column>
         <el-table-column
@@ -96,7 +105,7 @@
               type="danger"
               circle
               icon="el-icon-delete"
-              @click="handleDelete(scope.$index, scope.row)"></el-button>
+              @click="handleDelete(scope.row)"></el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -104,67 +113,157 @@
       <el-pagination
         background
         layout="prev, pager, next"
-        :total="1000">
+        :total="totalCount || 1"
+        :current-page.sync="page"
+        @current-change="onCurrentChange"
+        :page-size="pageSize"
+        :disabled="loading"
+      >
       </el-pagination>
     </el-card>
   </div>
 </template>
 <script>
-import { getArticle } from '@/api/article'
+import { getArticle, getArticleChannels, delArticle } from '@/api/article'
 export default {
   name: 'Article',
   data () {
     return {
       form: {
         name: '',
-        region: '',
-        date: '',
         delivery: false,
         type: [],
-        resource: '',
         desc: ''
       },
-      tableData: [{
+      tableData: [{ // 文章默认数据
+        id: 1,
         date: '2016-05-02',
         name: '王小虎',
         address: '上海市普陀区金沙江路 1518 弄',
         status: 2
       }, {
+        id: 2,
         date: '2016-05-04',
         name: '王小虎',
         address: '上海市普陀区金沙江路 1517 弄',
         status: 2
       }, {
+        id: 3,
         date: '2016-05-01',
         name: '王小虎',
         address: '上海市普陀区金沙江路 1519 弄',
         status: 2
       }, {
+        id: 4,
         date: '2016-05-03',
         name: '王小虎',
         address: '上海市普陀区金沙江路 1516 弄',
         status: 2
       }],
-      articles: []
+      articles: [], // 文章数据列表
+      articleStatus: [ // 文章数据状态
+        {
+          text: '草稿', type: ''
+        },
+        {
+          text: '待审核', type: 'info'
+        },
+        {
+          text: '审核通过', type: 'success'
+        },
+        {
+          text: '审核失败', type: 'warning'
+        },
+        {
+          text: '已删除', type: 'danger'
+        }
+      ],
+      channels: [], // 文章频道列表
+      defaultChannels: [ // 默认文章频道列表
+        { id: 0, name: 'javaScript' }, { id: 1, name: 'Vue' }, { id: 2, name: 'React' }, { id: 3, name: 'TypeScript' }
+      ],
+      channelId: null, // 频道id
+      totalCount: 0, // 总数据条数(决定页数)
+      pageSize: 20, // 每一页显示数据条数
+      status: null, // 筛选数据的状态(0为草稿，1为待审核...)
+      rangeDate: null, // 按时筛选的起止时间
+      loading: true, // 表格数据加载状态
+      page: 1 // 当前页
     }
   },
   methods: {
-    onSubmit () {
-      console.log('submit')
-    },
     handleEdit (index, row) {
       console.log(index, row)
     },
-    handleDelete (index, row) {
-      console.log(index, row)
+
+    // 删除文章
+    handleDelete (row) {
+      this.$confirm('是否删除?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.$message({
+          type: 'success',
+          message: '删除成功!'
+        })
+        this.tableData = this.tableData.filter(article => article.id !== row.id)
+        delArticle(`v1_0/articles/${row.id.toString()}`, 'DELETE').then(res => {
+          // 删除成功更新当前页数据列表
+          this.loadArticles(this.page)
+        }).catch(() => {
+          this.loadArticles(this.page)
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
+      })
+    },
+
+    // 加载数据
+    loadArticles (page = 1) {
+      // 开启loading状态
+      this.loading = true
+      getArticle('/v1_0/articles', {
+        page,
+        per_page: this.pageSize,
+        status: this.status,
+        channel_id: this.channelId,
+        begin_pubdate: this.rangeDate ? this.rangeDate[0] : null,
+        end_pubdate: this.rangeDate ? this.rangeDate[1] : null
+      }).then(res => {
+        const { results, total_count: totalCount } = res.data.data
+        this.articles = results
+        this.totalCount = totalCount
+        // 停止loading状态
+        this.loading = false
+      }).catch(err => {
+        console.log(err)
+        // 停止loading状态
+        this.loading = false
+      })
+    },
+
+    // 加载频道列表
+    loadArticlesChannels () {
+      getArticleChannels('/v1_0/channels').then(res => {
+        this.channels = res.data.data.channels
+      }).catch(err => {
+        console.log(err)
+      })
+    },
+
+    // 页码变化事件函数
+    // 此事件函数会通过一个page参数返回每一次点击的页码
+    onCurrentChange (page) {
+      this.loadArticles(page)
     }
   },
   mounted () {
-    getArticle('/mp/v1_0/articles').then(res => {
-      this.articles = res.data.data.result
-    }).catch(err => {
-      console.log(err)
-    })
+    this.loadArticles()
+    this.loadArticlesChannels()
   }
 }
 </script>
@@ -174,5 +273,9 @@ export default {
 }
 .list-tables{
   margin-bottom: 20px;
+}
+.article-cover{
+  width: 100px;
+  background-size: cover;
 }
 </style>
