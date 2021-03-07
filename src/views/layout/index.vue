@@ -11,7 +11,7 @@
         </div>
         <el-dropdown>
           <div class="el-dropdown-link">
-            <img :src="user.photo || 'https://profile.csdnimg.cn/8/A/3/3_weixin_52196306'" alt="" class="header-img">
+            <img :src="user.photo || 'https://avatar.csdnimg.cn/8/A/3/3_weixin_52196306_1604397381.jpg'" alt="" class="header-img">
             <strong>{{ user.name || '天' }}</strong>
             <i class="el-icon-arrow-down el-icon--right"></i>
           </div>

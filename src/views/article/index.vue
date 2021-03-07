@@ -4,7 +4,7 @@
       <!-- 面包屑 -->
       <div slot="header" class="clearfix">
         <el-breadcrumb separator-class="el-icon-arrow-right">
-          <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+          <el-breadcrumb-item :to="{ path: '/layout' }">首页</el-breadcrumb-item>
           <el-breadcrumb-item>活动管理</el-breadcrumb-item>
         </el-breadcrumb>
       </div>
@@ -45,7 +45,7 @@
       </el-form>
     </el-card>
 
-    <el-card class="box-card">
+    <el-card>
       <div slot="header" class="clearfix">
         <span>根据筛选条件共查询到 {{totalCount || 4}} 条数据</span>
       </div>
@@ -99,7 +99,7 @@
               type="primary"
               icon="el-icon-edit"
               circle
-              @click="handleEdit(scope.$index, scope.row)"></el-button>
+              @click="$router.push('/layout/publish?id=' + scope.row.id.toString())"></el-button>
             <el-button
               size="small"
               type="danger"
@@ -192,10 +192,6 @@ export default {
     }
   },
   methods: {
-    handleEdit (index, row) {
-      console.log(index, row)
-    },
-
     // 删除文章
     handleDelete (row) {
       this.$confirm('是否删除?', '提示', {

@@ -27,3 +27,35 @@ export const delArticle = (url, method = 'GET') => {
     url
   })
 }
+
+// 发布文章
+export const publishArticle = (url, data = {}, method = 'GET', draft = false) => {
+  return request({
+    method,
+    url,
+    data,
+    params: {
+      draft
+    }
+  })
+}
+
+// 编辑文章
+export const editArticle = (url, data = {}, method = 'GET', draft = false) => {
+  return request({
+    method,
+    url,
+    data,
+    params: {
+      draft
+    }
+  })
+}
+
+// 获取指定文章
+export const getArticleById = (url, method = 'GET') => {
+  return request({
+    method,
+    url
+  })
+}
