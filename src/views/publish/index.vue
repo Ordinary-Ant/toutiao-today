@@ -16,12 +16,28 @@
           <el-tiptap v-model="article.content" :extensions="extensions" lang="zh" height="400" placeholder="请输入内容"></el-tiptap>
         </el-form-item>
         <el-form-item label="封面">
-          <el-radio-group v-model="article.cover">
+          <el-radio-group v-model="article.cover.type">
             <el-radio :label="1">单图</el-radio>
             <el-radio :label="3">三图</el-radio>
             <el-radio :label="0">无图</el-radio>
             <el-radio :label="-1">自动</el-radio>
           </el-radio-group>
+
+          <!--
+            如果事件函数手动传入了参数，那么事件函数默认本身的参数就会被覆盖，需要再传一个$event参数
+            @update-cover="onUpdateCover(index,$event)"
+            :cover-image="article.cover.images[index]"
+            以上两行代码的简写方式：
+              v-model="article.cover.images[index]
+              == :value="article.cover.images[index]" + @input="article.cover.images[index]"
+          -->
+          <template v-if="article.cover.type > 0">
+            <ArticleCover
+              v-for="(cover,index) in article.cover.type"
+              :key="cover"
+              v-model="article.cover.images[index]"
+            />
+          </template>
         </el-form-item>
         <el-form-item label="频道" prop="channel_id">
           <el-select v-model="article.channel_id" placeholder="请选择频道">
@@ -63,6 +79,7 @@ import {
   CodeBlock
 } from 'element-tiptap'
 import 'element-tiptap/lib/index.css'
+import ArticleCover from './component/article-cover.vue'
 
 export default {
   name: 'publish',
@@ -166,7 +183,6 @@ export default {
         if (!valid) {
           return
         }
-
         // 通过
         if (this.$route.query.id) {
           editArticle(`/v1_0/articles/${this.$route.query.id}`, this.article, 'PUT', draft).then(() => {
@@ -193,9 +209,16 @@ export default {
         }
       }
       )
+    },
+
+    // 接收子组件中传递的cover url
+    onUpdateCover (index, url) {
+      this.article.cover.images[index] = url
     }
   },
+
   components: {
+    ArticleCover,
     'el-tiptap': ElementTiptap
   }
 }

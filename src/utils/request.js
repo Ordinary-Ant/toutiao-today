@@ -2,6 +2,7 @@
 
 import axios from 'axios'
 import JSONBig from 'json-bigint'
+// import router from '@/router'
 
 // 创建一个axios实例,之后发送请求时会以这个实例中的配置为基础。发送请求直接用request()即可
 const request = axios.create({
@@ -39,5 +40,19 @@ request.interceptors.request.use(
     return Promise.reject(error)
   }
 )
+
+// request.interceptors.response.use(
+//   response => {
+//     return response
+//   },
+//   // 所有响应码不再200~300内的都会被视为错误处理
+//   error => {
+//     if (error.response && error.response.status === 401) {
+//       window.localStorage.removeItem('user')
+//       router.push('/')
+//     }
+//     return Promise.reject(error)
+//   }
+// )
 
 export default request
