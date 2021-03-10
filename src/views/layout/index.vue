@@ -31,6 +31,8 @@
 <script>
 import AsideApp from './components/aside'
 import { updateUserProfile } from '@/api/user'
+import globalBus from '@/utils/global-bus'
+
 export default {
   name: 'layput',
   data () {
@@ -43,10 +45,18 @@ export default {
     // 组件一旦初始化，加载个人信息
     // 除了登录接口，其余接口都需要有身份，即存在token才能访问
     updateUserProfile('/v1_0/user/profile').then((res) => {
-      this.user = res.data
+      this.user = res.data.data
+    })
+
+    // 注册修改个人信息事件
+    globalBus.$on('update-user', (user) => {
+      // this.user = user 注意：不可直接将对象引用传递
+      this.user.name = user.name
+      this.user.photo = user.photo
     })
   },
   methods: {
+    // 退出账号
     onLogout () {
       this.$confirm('是否退出登录?', '提示', {
         confirmButtonText: '确定',

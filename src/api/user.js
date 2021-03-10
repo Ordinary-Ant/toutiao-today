@@ -22,3 +22,21 @@ export const updateUserProfile = (url, method = 'GET') => {
     // }
   })
 }
+
+// 更新用户头像
+export const updateUserPhoto = (url, method = 'GET', data) => {
+  return request({
+    method,
+    url,
+    data
+  })
+}
+
+// 更新用户资料
+export const updateUserInfo = (url, method = 'GET', data) => {
+  return request({
+    method,
+    url,
+    data
+  })
+}

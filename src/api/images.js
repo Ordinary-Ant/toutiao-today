@@ -11,3 +11,31 @@ export const uploadImage = function (url = {}, method = 'GET', data) {
     data
   })
 }
+
+// 獲取用户图片素材
+export const getImages = function (url = {}, params = {}, method = 'GET') {
+  return request({
+    method,
+    url,
+    params
+  })
+}
+
+// 删除用户图片素材
+export const delImages = function (url = {}, method = 'GET') {
+  return request({
+    method,
+    url
+  })
+}
+
+// 收藏用户图片素材
+export const collectImages = function (url = {}, method = 'GET', collect) {
+  return request({
+    method,
+    url,
+    data: {
+      collect
+    }
+  })
+}

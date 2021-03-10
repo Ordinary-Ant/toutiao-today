@@ -59,3 +59,17 @@ export const getArticleById = (url, method = 'GET') => {
     url
   })
 }
+
+// 修改评论状态
+export const changeCommentStatus = (url, method = 'GET', articleId, allow_comment = true) => {
+  return request({
+    method,
+    url,
+    params: {
+      article_id: articleId
+    },
+    data: {
+      allow_comment
+    }
+  })
+}
